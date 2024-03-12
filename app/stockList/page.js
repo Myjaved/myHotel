@@ -151,18 +151,79 @@ const StockOutwardTable = () => {
     saveAs(data, 'ItemData.xlsx');
   };
 
+  // const fetchItems = async () => {
+  //   try {
+  //     const response = await axios.get('http://192.168.1.40:5000/api/item/items');
+  //     const itemsWithPrice = await Promise.all(response.data.map(async (item) => {
+  //       const purchaseBillsResponse = await axios.get('http://192.168.1.40:5000/api/purchase/purchases', {
+  //         params: {
+  //           itemName: item.itemName
+  //         }
+  //       });
+  //       const purchaseBills = purchaseBillsResponse.data;
+
+  //       let totalValue = 0;
+
+  //       purchaseBills.forEach(bill => {
+  //         bill.items.forEach(billItem => {
+  //           if (billItem.productName === item.itemName) {
+  //             totalValue += billItem.quantity * billItem.pricePerQty;
+  //           }
+  //         });
+  //       });
+
+  //       return {
+  //         ...item,
+  //         price: totalValue
+  //       };
+  //     }));
+
+  //     setItemList(itemsWithPrice);
+  //   } catch (error) {
+  //     console.error('Error fetching items:', error.response ? error.response.data : error.message);
+  //   }
+  // };
+
   const fetchItems = async () => {
     try {
       const response = await axios.get('http://192.168.1.40:5000/api/item/items');
-      setItemList(response.data);
+      const itemsWithPrice = await Promise.all(response.data.map(async (item) => {
+        const purchaseBillsResponse = await axios.get('http://192.168.1.40:5000/api/purchase/purchases', {
+          params: {
+            itemName: item.itemName
+          }
+        });
+        const purchaseBills = purchaseBillsResponse.data;
+
+        let totalValue = 0;
+
+        purchaseBills.forEach(bill => {
+          bill.items.forEach(billItem => {
+            if (billItem.productName === item.itemName) {
+              const stockQty = item.stockQty; // Assuming stock.quantity represents the stock quantity
+              totalValue += stockQty * billItem.pricePerQty; // Use stockQty instead of billItem.quantity
+            }
+          });
+        });
+
+        return {
+          ...item,
+          price: totalValue
+        };
+      }));
+
+      setItemList(itemsWithPrice);
     } catch (error) {
       console.error('Error fetching items:', error.response ? error.response.data : error.message);
     }
   };
-  
+
+
   useEffect(() => {
     fetchItems();
   }, []); // Run once on component mount
+
+
   return (
     <>
       <Navbar />
@@ -255,7 +316,7 @@ const StockOutwardTable = () => {
                           <td className="p-1 border text-center">{entry.availableQuantity}</td>
                           <td className="p-1 border text-center">{entry.stockQty}</td>
                           <td className="p-1 border text-center">{entry.availableQuantity - entry.stockQty}</td>
-                          
+
                         </tr>
                       );
                     }
@@ -280,6 +341,7 @@ const StockOutwardTable = () => {
                     <tr>
                       <th className="p-2 border whitespace-nowrap">Item Name</th>
                       <th className="p-2 border whitespace-nowrap">Remaining Stock</th>
+                      <th className="p-2 border whitespace-nowrap">Price</th> {/* Add this line */}
                     </tr>
                   </thead>
                   <tbody>
@@ -287,6 +349,8 @@ const StockOutwardTable = () => {
                       <tr key={item.itemId}>
                         <td className="p-1 border text-center">{item.itemName}</td>
                         <td className="p-1 border text-center">{item.stockQty}</td>
+                        <td className="p-1 border text-center">{item.price}</td> {/* Add this line */}
+
                       </tr>
                     ))}
                   </tbody>

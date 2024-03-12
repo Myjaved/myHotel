@@ -20,9 +20,6 @@ const EditModal = ({ isOpen, onCancel, onEdit, menuToEdit }) => {
     // const [selectedImage, setSelectedImage] = useState(null);
     const [errorMessage, setErrorMessage] = useState("");
 
-
-
-
     useEffect(() => {
         let timeoutId;
 

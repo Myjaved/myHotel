@@ -64,24 +64,61 @@ const Billing = ({ tableId, acPercentage }) => {
   //   try {
   //     // Extract the names of selected menu items
   //     const selectedMenuNames = currentOrder.map((orderItem) => orderItem.name);
-  
+
   //     console.log("Selected menu names to cancel:", selectedMenuNames); // Add this line
   //     // Delete selected menus from KOT collection
   //     await axios.delete(`http://192.168.1.40:5000/api/kot/${tableId}`, {
   //       data: { canceledItemNames: selectedMenuNames }, // Send canceledItemNames in the request body
   //     });
-  
+
   //     // Filter out selected menus from current order
   //     const updatedOrder = currentOrder.filter(
   //       (orderItem) => !selectedMenuNames.includes(orderItem.name)
   //     );
-  
+
   //     // Update the current order
   //     setCurrentOrder(updatedOrder);
-  
+
   //     // Clear selected menu names
   //     setSelectedMenuNames([]);
-  
+
+  //     // Optionally, you can show a success message or perform other actions after cancellation
+  //   } catch (error) {
+  //     console.error("Error cancelling KOT:", error);
+  //     // Optionally, you can show an error message or perform other error handling
+  //   }
+  // };
+  // const handleCancelKOT = async () => {
+  //   try {
+  //     // Extract the names of selected menu items
+  //     console.log("Selected menu names to cancel:", selectedMenuNames);
+
+  //     if (selectedMenuNames.length === 0) {
+  //       console.log("No items selected to cancel.");
+  //       return;
+  //     }
+
+  //     // Delete selected menus from KOT collection
+  //     await axios.delete(`http://192.168.1.40:5000/api/kot/${tableId}`, {
+  //       data: { canceledItemNames: selectedMenuNames },
+  //     });
+
+  //     // removeItemsFromLocalStorage(tableId);
+  //     selectedMenuNames.forEach((itemName) => {
+  //       removeItemFromLocalStorage(tableId, itemName);
+  //     });
+
+  //     // Filter out selected menus from current order
+  //     const updatedOrder = currentOrder.filter(
+  //       (orderItem) => !selectedMenuNames.includes(orderItem.name)
+  //     );
+
+  //     // Update the current order
+  //     setCurrentOrder(updatedOrder);
+
+  //     // Clear selected menu names
+  //     setSelectedMenuNames([]);
+
   //     // Optionally, you can show a success message or perform other actions after cancellation
   //   } catch (error) {
   //     console.error("Error cancelling KOT:", error);
@@ -120,24 +157,213 @@ const Billing = ({ tableId, acPercentage }) => {
       setSelectedMenuNames([]);
 
       // Optionally, you can show a success message or perform other actions after cancellation
+
+      // HTML code for printing canceled items
+      const printWindow = window.open("", "_blank");
+
+      if (!printWindow) {
+        alert("Please allow pop-ups to print the canceled items.");
+        return;
+      }
+
+      const canceledItemsContent = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+        <div>
+          <title>Cancel KOT</title>
+          <style>
+            @page {
+              margin: 2mm; /* Adjust the margin as needed */
+            }
+            /* Add your custom styles for KOT print here */
+            body {
+              font-family: Arial, sans-serif;
+              margin:0;
+              padding:0;
+              margin-top:-2px;
+         
+            }
+            .kot-header {
+              text-align: center;
+            }
+         
+            .kot-table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            .kot-table th, .kot-table td {
+              border-top: 1px dotted black;
+              border-bottom: 1px dotted black;
+              border-left: 1px dotted black;
+              border-right: 1px dotted black;
+               text-align: left;
+              padding: 3px;
+            }
+       
+            .table-name{
+              display:flex
+           
+             
+            }
+       
+            .table-name {
+              text-align: center;
+           
+            }
+         
+            .sections {
+              display: flex;
+              align-items: center;
+            }
+           
+            .space {
+              margin: 0 50px; /* Adjust the margin as needed */
+            }
+            .datetime-container{
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            }
+             .datetime-container p{
+            font-size:10px
+            }
+            .label{
+              margin-top:-1rem
+              font-size:60px
+            }
+            .table-name{
+              margin: 0 2px;
+            }
+          </style>
+        </head>
+            <body>
+                <div class="kot-header">
+                    Cancel KOTs
+                </div>
+
+                <div class="sections">
+                    <span class="table-name">
+                        TABLE- ${tableInfo ? tableInfo.tableName : "Table Not Found"}
+                    </span>
+                    <span class="space"></span>
+                </div>
+
+                <div class="datetime-container">
+                    <span class="label">Date:<span id="date" class="datetime"></span></span>
+                    <span class="datetime-space"> </span>
+                    <span class="label">Time:<span id="time" class="datetime"></span></span>
+                </div>
+
+                <div>
+                    <span>Waiter: ${waiterName}</span>
+                </div>
+
+                <div class="kot-date-time" id="date-time"></div>
+
+                <div class="kot-items">
+                    <table class="kot-table">
+                        <thead>
+                            <tr>
+                                <th> Sr</th>
+                                <th>Items</th>
+                                <th>Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${selectedMenuNames.map((itemName, index) => `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td class="kot-item-name">${itemName}</td>
+                                    <td>All</td> <!-- Assuming 1 quantity for canceled items -->
+                                </tr>
+                            `).join("")}
+                        </tbody>
+                    </table>
+                </div>
+
+                <script>
+                    // Function to update KOT date
+                    function updateKOTDate() {
+                        const dateElement = document.getElementById('date');
+                        const now = new Date();
+
+                        // Check if the current hour is before 3 AM (hour 3 in 24-hour format)
+                        if (now.getHours() < 3) {
+                            // If before 3 AM, use the previous date
+                            now.setDate(now.getDate() - 1);
+                        }
+
+                        // Format date as dd/mm/yyyy
+                        const day = String(now.getDate()).padStart(2, '0');
+                        const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+                        const year = now.getFullYear();
+                        const formattedDate = day + '/' + month + '/' + year;
+
+                        // Update the content of the element for KOT date
+                        dateElement.textContent = formattedDate;
+
+                        // Return the formatted date
+                        return formattedDate;
+                    }
+
+                    // Function to update actual current time
+                    function updateActualTime() {
+                        const timeElement = document.getElementById('time');
+                        const now = new Date();
+
+                        // Format time as hh:mm:ss
+                        const options = { hour: 'numeric', minute: 'numeric', second: 'numeric' };
+                        const formattedTime = now.toLocaleTimeString('en-US', options);
+
+                        // Update the content of the element for actual time
+                        timeElement.textContent = formattedTime;
+                    }
+
+                    // Function to update both KOT date and actual current time
+                    function updateDateTime() {
+                        const kotDate = updateKOTDate(); // Update KOT date
+                        updateActualTime(); // Update actual current time
+
+                        // Optionally, you can call this function every second to update time dynamically
+                        setTimeout(updateDateTime, 1000);
+                    }
+
+                    // Call the function to update both KOT date and actual current time
+                    updateDateTime();
+                </script>
+            </body>
+            </html>
+        `;
+
+      // Write the content to the new window or iframe
+      printWindow.document.write(canceledItemsContent);
+
+      // Trigger the print action
+      printWindow.document.close();
+      printWindow.print();
+
+      // Close the print window or iframe after printing
+      printWindow.close();
     } catch (error) {
       console.error("Error cancelling KOT:", error);
       // Optionally, you can show an error message or perform other error handling
     }
   };
 
+
   const removeItemFromLocalStorage = (tableId, itemName) => {
     const localStorageKey = `savedBills_${tableId}`;
     const savedBills = JSON.parse(localStorage.getItem(localStorageKey)) || [];
-  
+
     // Find the bill with the matching tableId
     const billToUpdate = savedBills.find((bill) => bill.tableId === tableId);
-  
+
     if (billToUpdate) {
       // Filter out the item with the matching name
       const updatedItems = billToUpdate.items.filter((item) => item.name !== itemName);
       const updatedBill = { ...billToUpdate, items: updatedItems };
-  
+
       // Update localStorage
       const updatedBills = savedBills.map((bill) => {
         if (bill.tableId === tableId) {
@@ -145,11 +371,11 @@ const Billing = ({ tableId, acPercentage }) => {
         }
         return bill;
       });
-  
+
       localStorage.setItem(localStorageKey, JSON.stringify(updatedBills));
     }
   };
-  
+
 
 
   // ========taste fuctionality=======//
@@ -200,14 +426,12 @@ const Billing = ({ tableId, acPercentage }) => {
           taste: selectedTasteId,
         }; // Include selectedTasteId as taste if not "other" or not found in tastes
 
-    console.log("Selected Taste:", selectedTaste);
 
     return {
       ...orderItem,
       selectedTaste,
     };
   });
-  // console.log("Modified Current Order:", modifiedCurrentOrder);
 
   const openCloseTablesModal = () => {
     setIsCloseTablesModalOpen(true);
@@ -263,7 +487,6 @@ const Billing = ({ tableId, acPercentage }) => {
           "http://192.168.1.40:5000/api/greet/greet"
         );
         setGreetings(response.data);
-        // console.log(response.data);
       } catch (error) {
         console.error("Error fetching greetings:", error);
       }
@@ -279,7 +502,6 @@ const Billing = ({ tableId, acPercentage }) => {
         const response = await axios.get(
           "http://192.168.1.40:5000/api/order/get-next-order-number"
         );
-        // console.log(response.data.nextOrderNumber);
         const nextOrderNumber = response.data.nextOrderNumber;
         setOrderNumber(nextOrderNumber);
       } catch (error) {
@@ -330,7 +552,6 @@ const Billing = ({ tableId, acPercentage }) => {
 
       // Redirect to the edit page with the selected order ID
       const orderNumber = order.orderNumber;
-      console.log(orderNumber);
       router.push(`/edit/${orderNumber}`);
     } else {
       console.error("Order Number is undefined");
@@ -424,7 +645,7 @@ const Billing = ({ tableId, acPercentage }) => {
         total: calculateTotal().total,
       };
 
-      console.log(orderData);
+      // console.log(orderData);
 
       if (orderData.items.length === 0) {
         console.warn("No items in the order. Not saving or printing KOT.");
@@ -451,14 +672,14 @@ const Billing = ({ tableId, acPercentage }) => {
           `http://192.168.1.40:5000/api/order/update-order-by-id/${orderIdToUpdate}`,
           orderData
         );
-        console.log("Update Response:", updateResponse.data);
+        // console.log("Update Response:", updateResponse.data);
       } else {
         // If no existing bill is found, create a new one
         const createResponse = await axios.post(
           `http://192.168.1.40:5000/api/order/order/${tableId}`,
           orderData
         );
-        console.log("Create Response:", createResponse.data);
+        // console.log("Create Response:", createResponse.data);
       }
       // Identify newly added items
       const newItems = orderData.items.filter(
@@ -516,9 +737,9 @@ const Billing = ({ tableId, acPercentage }) => {
         kotData
       );
 
-      console.log("Create Response:", KOTResponse.data);
+      // console.log("Create Response:", KOTResponse.data);
 
-      const printWindow = window.open("", "_blank");
+      const printWindow = window.open("", "_self");
 
       if (!printWindow) {
         alert("Please allow pop-ups to print the KOT.");
@@ -712,14 +933,15 @@ const Billing = ({ tableId, acPercentage }) => {
       // Write the content to the new window or iframe
       printWindow.document.write(kotContent);
 
+      // Add an event listener to close the print window after printing
+      printWindow.onafterprint = function () {
+        // Close the print window or iframe after printing
+        printWindow.close();
+      };
+
       // Trigger the print action
       printWindow.document.close();
       printWindow.print();
-
-      // Close the print window or iframe after printing
-      printWindow.close();
-      // Print or further process the KOT content as needed
-      console.log(kotContent);
 
       // Save order to the local storage
       const savedBills =
@@ -753,7 +975,7 @@ const Billing = ({ tableId, acPercentage }) => {
         `http://192.168.1.40:5000/api/kot/kot/${tableId}`
       );
       const existingKOT = existingKOTResponse.data;
-      console.log(existingKOT);
+      // console.log(existingKOT);
 
       if (!existingKOT) {
         console.error("No existing bill found.");
@@ -762,7 +984,7 @@ const Billing = ({ tableId, acPercentage }) => {
 
       const existingItems = existingKOT.items || [];
       const printWindow = window.open("", "_blank");
-      console.log(existingItems);
+      // console.log(existingItems);
       if (!printWindow) {
         alert("Please allow pop-ups to print the KOT.");
         return;
@@ -962,14 +1184,14 @@ const Billing = ({ tableId, acPercentage }) => {
           `http://192.168.1.40:5000/api/order/update-order-by-id/${orderIdToUpdate}`,
           orderData
         );
-        console.log("Update Response:", updateResponse.data);
+        // console.log("Update Response:", updateResponse.data);
       } else {
         // If no existing bill is found, create a new one
         const createResponse = await axios.post(
           `http://192.168.1.40:5000/api/order/order/${tableId}`,
           orderData
         );
-        console.log("Create Response:", createResponse.data);
+        // console.log("Create Response:", createResponse.data);
       }
 
       // Identify newly added items
@@ -1068,6 +1290,8 @@ const Billing = ({ tableId, acPercentage }) => {
             isPrint: 1,
           }
         );
+        await axios.patch(`http://192.168.1.40:5000/api/kot/kot/settle/${tableId}`);
+
       } else {
         // If no existing temporary order is found, create a new one
         await axios.post(
@@ -1080,7 +1304,7 @@ const Billing = ({ tableId, acPercentage }) => {
       localStorage.removeItem(`savedBills_${tableId}`);
 
       // await new Promise((resolve) => setTimeout(resolve, 500));
-      console.log("document ready for printing");
+      // console.log("document ready for printing");
 
       const printWindow = window.open("", "_blank");
 
@@ -1716,6 +1940,7 @@ const Billing = ({ tableId, acPercentage }) => {
             isPrint: 1,
           }
         );
+        await axios.patch(`http://192.168.1.40:5000/api/kot/kot/settle/${tableId}`);
       } else {
         // If no existing temporary order is found, create a new one
         await axios.post(
@@ -1724,8 +1949,10 @@ const Billing = ({ tableId, acPercentage }) => {
         );
       }
 
+
       // Remove the local storage item for the specific table
       localStorage.removeItem(`savedBills_${tableId}`);
+
 
       router.push("/order");
       // Open the payment modal after printing
@@ -1748,7 +1975,7 @@ const Billing = ({ tableId, acPercentage }) => {
 
   const addToOrder = useCallback(
     (product) => {
-      console.log("Adding to order:", product);
+      // console.log("Adding to order:", product);
       // Update the current order
       setCurrentOrder((prevOrder) => {
         const existingItem = prevOrder.find(
@@ -1756,16 +1983,16 @@ const Billing = ({ tableId, acPercentage }) => {
         );
 
         if (existingItem) {
-          console.log("Adding to existing item:", existingItem);
+          // console.log("Adding to existing item:", existingItem);
           const updatedOrder = prevOrder.map((item) =>
             item.name === existingItem.name
               ? { ...item, quantity: item.quantity + 1 }
               : item
           );
-          console.log("Updated Order:", updatedOrder);
+          // console.log("Updated Order:", updatedOrder);
           return updatedOrder;
         } else {
-          console.log("Adding new item:", product);
+          // console.log("Adding new item:", product);
           return [...prevOrder, { ...product, quantity: 1 }];
         }
       });
@@ -1791,7 +2018,7 @@ const Billing = ({ tableId, acPercentage }) => {
 
         return filteredOrder;
       } else {
-        console.log("Item not found in order:", product);
+        // console.log("Item not found in order:", product);
         return prevOrder;
       }
     });
@@ -1852,7 +2079,7 @@ const Billing = ({ tableId, acPercentage }) => {
         .get(`http://192.168.1.40:5000/api/table/tables/${tableId}`)
         .then((response) => {
           setTableInfo(response.data);
-    
+
           // Fetch saved bills for the table from the API
           axios
             .get(`http://192.168.1.40:5000/api/order/savedBills/${tableId}`)
@@ -1872,7 +2099,7 @@ const Billing = ({ tableId, acPercentage }) => {
           console.error("Error fetching table information:", error);
         });
     }
-    
+
     document.addEventListener("keydown", handleKeyDown);
     // document.addEventListener('keydown', handleSlashKey);
 
@@ -1974,7 +2201,7 @@ const Billing = ({ tableId, acPercentage }) => {
       axios
         .get(`http://192.168.1.40:5000/api/menu/${selectedCategory._id}`)
         .then((response) => {
-          console.log(response.data);
+          // console.log(response.data);
           const menusArray = response.data || []; // Ensure menus is an array
           setMenus(menusArray);
         })
@@ -2136,7 +2363,7 @@ const Billing = ({ tableId, acPercentage }) => {
   };
 
 
-  
+
   return (
 
     <div className=" font-sans mt-2">
@@ -2232,7 +2459,7 @@ const Billing = ({ tableId, acPercentage }) => {
                         type="checkbox"
                         id={`checkbox_${orderItem.name}`}
                         name={`checkbox_${orderItem.name}`}
-                        className="mr-2"
+                        className="mr-2 cursor-pointer"
                         checked={selectedMenuNames.includes(orderItem.name)}
                         onChange={() => handleCheckboxChange(orderItem.name)}
                       />
@@ -2293,7 +2520,7 @@ const Billing = ({ tableId, acPercentage }) => {
                         <div className="float-right flex justify-between  md:ml-1 mt-1">
                           <span
                             className="rounded-md cursor-pointer bg-orange-100 align-middle text-center  text-orange-500
-                         font-bold p-1 lg:w-4 lg:text-md md:w-4 sm:w-4"
+                         font-bold p-1 lg:w-6 lg:text-md md:w-4 sm:w-4"
                             onClick={() => removeFromOrder(orderItem)}
                           >
                             -
@@ -2306,7 +2533,7 @@ const Billing = ({ tableId, acPercentage }) => {
                             min={1}
                           />
                           <span
-                            className="rounded-md cursor-pointer  sm:w-4 bg-orange-100 lg:w-4 justify-center flex align-middle text-center text-orange-500  md:w-4  ml-1 font-bold lg:ml-1 p-1 sm:p-0 lg:text-md"
+                            className="rounded-md cursor-pointer  sm:w-4 bg-orange-100 lg:w-6 justify-center flex align-middle text-center text-orange-500  md:w-4  ml-1 font-bold lg:ml-1 p-1 sm:p-0 lg:text-md"
                             onClick={() => addToOrder(orderItem)}
                           >
                             +
@@ -2411,7 +2638,7 @@ const Billing = ({ tableId, acPercentage }) => {
                       className="px-3 py-2 rounded-md shadow-md text-center bg-blue-100 text-blue-500 font-bold cursor-pointer text-xs"
                       onClick={handleSave}
                     >
-                      Save (Pg Up)
+                      Save (PgUp)
                     </div>
                   </div>
 
@@ -2420,7 +2647,7 @@ const Billing = ({ tableId, acPercentage }) => {
                       className="px-3 py-2 rounded-md shadow-md text-center bg-green-200 text-green-600 font-bold cursor-pointer text-xs"
                       onClick={handlePrintBill}
                     >
-                      Bill ( * )
+                      PrintBill ( * )
                     </div>
                   </div>
 
@@ -2429,7 +2656,7 @@ const Billing = ({ tableId, acPercentage }) => {
                       className="px-3 py-2 rounded-md shadow-md text-center bg-gray-200 text-gray-600 font-bold cursor-pointer text-xs"
                       onClick={() => openCloseTablesModal()}
                     >
-                      Exit (Pg Dn)
+                      Exit (PgDn)
                     </div>
 
                   </div>
@@ -2439,7 +2666,7 @@ const Billing = ({ tableId, acPercentage }) => {
                       onClick={handleCancelKOT}
 
                     >
-                      cancelKoT
+                      Cancel-KOT
                     </div>
 
                   </div>

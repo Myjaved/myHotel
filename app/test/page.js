@@ -148,16 +148,9 @@ const Try = () => {
 
         const billsData = await Promise.all(
           tablesResponse.data.map(async (table) => {
-            const billsResponse = await axios.get(
-              `http://192.168.1.40:5000/api/order/order/${table._id}`
-            );
-
-            const temporaryBills = billsResponse.data.filter(
-              (bill) => bill.isTemporary
-            );
-            const latestBill =
-              temporaryBills.length > 0 ? temporaryBills[0] : null;
-
+            const billsResponse = await axios.get(`http://192.168.1.40:5000/api/order/order/${table._id}`);
+            const temporaryBills = billsResponse.data.filter((bill) => bill.isTemporary);
+            const latestBill = temporaryBills.length > 0 ? temporaryBills[0] : null;
             return { [table._id]: latestBill };
           })
         );
@@ -170,6 +163,12 @@ const Try = () => {
     };
 
     fetchData();
+
+    // Fetch data every 3 seconds
+    const intervalId = setInterval(fetchData, 2000);
+
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
   }, []); // Remove dependencies to fetch data once on component mount
 
   useEffect(() => {

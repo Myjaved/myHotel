@@ -6,7 +6,7 @@
 
 const nextConfig = {
     images: {
-      domains: ['localhost'], // Add your localhost hostname here
+      domains: ['192.168.1.40'], // Add your 192.168.1.40 hostname here
     },
     server: {
       host: '0.0.0.0',
